@@ -5,28 +5,35 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>키움형대용 신용주문 & 담보비율 계산기</title>
 <style>
+  :root{
+    --card:#fafafa; --line:#e6e6e6; --muted:#777; --ok:#127c36; --warn:#b00020;
+    --req-bg:#fff7d1; --req-bd:#f2c94c;
+  }
   body{font-family:system-ui,-apple-system,Segoe UI,Roboto,'Noto Sans KR',Arial;line-height:1.9;margin:0;background:#fff}
   .wrap{max-width:980px;margin:0 auto;padding:20px}
   h1,h2,h3{margin:1.2em 0 .5em}
-  .card{border:1px solid #e6e6e6;border-radius:12px;padding:14px;margin:10px 0;background:#fafafa}
+  .card{border:1px solid var(--line);border-radius:12px;padding:14px;margin:10px 0;background:var(--card)}
   .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
   label{font-weight:600;font-size:14px}
   input[type="text"], select{width:100%;padding:10px 12px;border:1px solid #cfcfcf;border-radius:10px;background:#fff;font-size:15px}
   input[readonly]{background:#f1f8f4}
   small{color:#666}
-  .muted{color:#777;font-size:14px}
+  .muted{color:var(--muted);font-size:14px}
   .btn{display:inline-block;padding:9px 14px;border:1px solid #999;border-radius:10px;background:#fff;cursor:pointer}
   .btn.primary{background:#111;color:#fff;border-color:#111}
   .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-  table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid #e6e6e6;border-radius:12px;overflow:hidden;background:#fff}
+  table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
   th,td{padding:10px 8px;border-bottom:1px solid #eee;text-align:center;font-size:14px}
   th{background:#f6f6f6;font-weight:700}
   tr:last-child td{border-bottom:none}
   .pill{display:inline-block;padding:2px 10px;border-radius:999px;border:1px solid #ddd;background:#f8f8f8;font-size:12px}
   .tag{font-weight:700}
-  .ok{color:#127c36}
-  .warn{color:#b00020}
+  .ok{color:var(--ok)} .warn{color:var(--warn)}
+  .legend{display:flex;gap:10px;align-items:center;margin:.5rem 0 0}
+  .legend .chip{display:inline-block;padding:2px 10px;border-radius:999px;border:1px solid #ddd;background:#f8f8f8;font-size:12px}
+  .req{background:var(--req-bg) !important;border-color:var(--req-bd) !important; box-shadow:0 0 0 2px rgba(242,201,76,.15) inset}
+  .req-label::after{content:"  (필수)"; color:#b46900; font-weight:700}
   details{background:#fbfbfb;border:1px dashed #ddd;border-radius:10px;padding:10px 12px}
   @media (max-width:720px){.row,.row-3{grid-template-columns:1fr} table{font-size:13px}}
 </style>
@@ -37,39 +44,72 @@
   <p class="muted">• <b>보증금률 45%</b>는 <b>현금 30% + 대용 15%</b> 구성 ⇒ <span class="pill">대용 인정 상한 = 현금 × 0.5</span><br>
   • <b>신용주문 가능금액</b> = (현금 + 인정대용) ÷ 0.45 · <b>담보비율</b> = (담보계 ÷ 신용계) × 100 → <span class="tag">140% 이상</span></p>
 
+  <!-- ① 기본 입력 -->
   <div class="card">
     <h3>① 기본 입력</h3>
+    <div class="legend">
+      <span class="chip">💡 숫자 입력칸은 자동으로 <b>천단위(,)</b> 표시됩니다.</span>
+      <span class="chip">🟡 노란 칸은 <b>필수</b> 입력</span>
+    </div>
     <div class="row">
-      <div><label>현금(예수금, 원)</label><input type="text" id="cash" value="1000000" inputmode="numeric"><small>예: 1000000</small></div>
-      <div><label>대용(증권) 평가금액(원)</label><input type="text" id="substit" value="1000000" inputmode="numeric"><small>예: 1000000</small></div>
+      <div>
+        <label class="req-label">현금(예수금, 원)</label>
+        <input type="text" id="cash" class="num req" value="1,000,000" inputmode="numeric" placeholder="예: 1,000,000">
+      </div>
+      <div>
+        <label class="req-label">대용(증권) 평가금액(원)</label>
+        <input type="text" id="substit" class="num req" value="1,000,000" inputmode="numeric" placeholder="예: 1,000,000">
+      </div>
     </div>
     <div class="row-3" style="margin-top:8px">
-      <div><label>보증금률(%)</label><input type="text" id="marginRate" value="45"><small>키움형대용 기본 45%</small></div>
-      <div><label>보증금 구성비 - 현금(%)</label><input type="text" id="cashRate" value="30"><small>기본 30%</small></div>
-      <div><label>보증금 구성비 - 대용(%)</label><input type="text" id="substitRate" value="15"><small>기본 15% (현금의 절반)</small></div>
+      <div>
+        <label>보증금률(%)</label>
+        <input type="text" id="marginRate" value="45" inputmode="decimal">
+        <small>키움형대용 기본 45%</small>
+      </div>
+      <div>
+        <label>보증금 구성비 - 현금(%)</label>
+        <input type="text" id="cashRate" value="30" inputmode="decimal">
+        <small>기본 30%</small>
+      </div>
+      <div>
+        <label>보증금 구성비 - 대용(%)</label>
+        <input type="text" id="substitRate" value="15" inputmode="decimal">
+        <small>기본 15% (현금의 절반)</small>
+      </div>
     </div>
   </div>
 
+  <!-- ② 신용계·목표비율 -->
   <div class="card">
-    <h3>② 신용계·목표비율 입력</h3>
+    <h3>② 신용계·목표비율</h3>
     <div class="row">
-      <div><label>신용계(원) = 신용융자 + 대주 + 담보대출(체결기준)</label><input type="text" id="creditTotal" value="0" inputmode="numeric"><small>담보비율 계산에 사용</small></div>
-      <div><label>목표 담보유지비율(%)</label><input type="text" id="targetRatio" value="140"><small>기본 140%</small></div>
+      <div>
+        <label class="req-label">신용계(원) = 신용융자 + 대주 + 담보대출(체결기준)</label>
+        <input type="text" id="creditTotal" class="num req" value="0" inputmode="numeric" placeholder="예: 12,345,678">
+      </div>
+      <div>
+        <label>목표 담보유지비율(%)</label>
+        <input type="text" id="targetRatio" value="140" inputmode="decimal">
+        <small>기본 140%</small>
+      </div>
     </div>
   </div>
 
+  <!-- ③ 담보등급표 -->
   <div class="card">
     <h3>③ 담보등급표(인정비율, %)</h3>
     <div class="row-3">
-      <div><label>A</label><input type="text" id="gradeA" value="70"></div>
-      <div><label>B</label><input type="text" id="gradeB" value="65"></div>
-      <div><label>C</label><input type="text" id="gradeC" value="60"></div>
-      <div><label>D</label><input type="text" id="gradeD" value="55"></div>
-      <div><label>E</label><input type="text" id="gradeE" value="50"></div>
+      <div><label>A</label><input type="text" id="gradeA" value="70" inputmode="decimal"></div>
+      <div><label>B</label><input type="text" id="gradeB" value="65" inputmode="decimal"></div>
+      <div><label>C</label><input type="text" id="gradeC" value="60" inputmode="decimal"></div>
+      <div><label>D</label><input type="text" id="gradeD" value="55" inputmode="decimal"></div>
+      <div><label>E</label><input type="text" id="gradeE" value="50" inputmode="decimal"></div>
     </div>
-    <small>※ 종목·시점에 따라 변동. 최신 공지로 조정하세요.</small>
+    <small class="muted">※ 종목·시점에 따라 변동. 최신 공지로 조정하세요.</small>
   </div>
 
+  <!-- ④ 담보 종목 입력 -->
   <div class="card">
     <h3>④ 담보 종목 입력(담보비율 계산용)</h3>
     <table id="tbl">
@@ -77,90 +117,167 @@
       <tbody id="tbody"></tbody>
       <tfoot><tr><th colspan="4" style="text-align:right">유효담보 합계</th><th id="sumEff">0</th></tr></tfoot>
     </table>
-    <div class="btn-row"><button class="btn" onclick="addRow()">행 추가</button><button class="btn" onclick="clearRows()">모두 삭제</button></div>
+    <div class="btn-row"><button class="btn" id="addRowBtn">행 추가</button><button class="btn" id="clearRowsBtn">모두 삭제</button></div>
   </div>
 
+  <!-- ⑤ 결과 -->
   <div class="card">
     <h3>⑤ 결과</h3>
     <div class="row">
-      <div><label>인정 대용(주문용, 원)</label><input type="text" id="recognizedSubstit" readonly><small>MIN(대용, 현금 × (대용%/현금%))</small></div>
-      <div><label>신용주문 가능금액(원)</label><input type="text" id="orderCapacity" readonly><small>(현금 + 인정대용) ÷ 보증금률</small></div>
+      <div>
+        <label>인정 대용(주문용, 원)</label>
+        <input type="text" id="recognizedSubstit" readonly>
+        <small>MIN(대용, 현금 × (대용%/현금%))</small>
+      </div>
+      <div>
+        <label>신용주문 가능금액(원)</label>
+        <input type="text" id="orderCapacity" readonly>
+        <small>(현금 + 인정대용) ÷ 보증금률</small>
+      </div>
     </div>
     <div class="row" style="margin-top:8px">
-      <div><label>담보계(원) = 현금 + 유효담보 합계</label><input type="text" id="collateralSum" readonly></div>
-      <div><label>담보비율(%)</label><input type="text" id="collateralRatio" readonly><small id="ratioStatus" class="ok">140% 이상이면 정상</small></div>
+      <div>
+        <label>담보계(원) = 현금 + 유효담보 합계</label>
+        <input type="text" id="collateralSum" readonly>
+      </div>
+      <div>
+        <label>담보비율(%)</label>
+        <input type="text" id="collateralRatio" readonly>
+        <small id="ratioStatus" class="ok">140% 이상이면 정상</small>
+      </div>
     </div>
     <div class="row" style="margin-top:8px">
-      <div><label>필요 추가담보금(원)</label><input type="text" id="requiredCollateral" readonly><small>MAX(0, 신용계×목표비율 − 담보계)</small></div>
+      <div>
+        <label>필요 추가담보금(원)</label>
+        <input type="text" id="requiredCollateral" readonly>
+      </div>
       <div style="display:flex;align-items:center;gap:10px"><span class="pill">체결기준 · 16:30 이후 현재가 적용</span></div>
     </div>
-    <div class="btn-row"><button class="btn primary" onclick="recalc()">계산하기</button><button class="btn" onclick="resetAll()">초기화</button></div>
+    <div class="btn-row"><button class="btn primary" id="recalcBtn">계산하기</button><button class="btn" id="resetBtn">초기화</button></div>
   </div>
 
+  <!-- ⑥ 단순 무식법 -->
   <div class="card">
     <h3>⑥ ‘단순 무식법’(일부 상환·매도) 빠른 추정</h3>
     <div class="row">
-      <div><label>현재 담보부족액(원)</label><input type="text" id="brutalShortfall" value="1000000"><small>예: 1000000</small></div>
-      <div><label>1주 매도 시 부족액 감소(원)</label><input type="text" id="perShareEffect" value="100000"><small>실매도 1주 체감치</small></div>
+      <div>
+        <label>현재 담보부족액(원)</label>
+        <input type="text" id="brutalShortfall" class="num" value="1,000,000">
+      </div>
+      <div>
+        <label>1주 매도 시 부족액 감소(원)</label>
+        <input type="text" id="perShareEffect" class="num" value="100,000">
+      </div>
     </div>
     <div class="row" style="margin-top:8px">
-      <div><label>필요 매도 수량(추정, 주)</label><input type="text" id="neededShares" readonly></div>
-      <div><div class="muted">담보비율이 140% 미만이면 <b>가정산예수금이 음수</b>가 되어 신규매수 불가. <b>현금주식 일부 매도</b> 등으로 플러스로 먼저 전환 필요.</div></div>
+      <div>
+        <label>필요 매도 수량(추정, 주)</label>
+        <input type="text" id="neededShares" readonly>
+      </div>
+      <div class="muted">※ 체감치 기반 추정치입니다. (수수료/호가·슬리피지 감안하여 1~2회 미세조정 권장)</div>
     </div>
-    <div class="btn-row"><button class="btn" onclick="calcBrutal()">빠르게 추정</button></div>
+    <div class="btn-row"><button class="btn" id="calcBrutalBtn">빠르게 추정</button></div>
   </div>
 
+  <!-- ⑦ S 일반식 계산기 -->
   <div class="card">
     <h3>⑦ 목표 140% 위한 필요 매도금액 S (등급 k 반영)</h3>
     <div class="row">
-      <div><label>현재 담보계 C (원)</label><input type="text" id="S_C" value="0" inputmode="numeric"><small>위 결과의 담보계를 사용해도 됨</small></div>
-      <div><label>현재 신용계 L (원)</label><input type="text" id="S_L" value="0" inputmode="numeric"><small>융자/대주/담보대출 합(체결기준)</small></div>
+      <div>
+        <label class="req-label">현재 담보계 C (원)</label>
+        <input type="text" id="S_C" class="num req" value="0" inputmode="numeric" placeholder="예: 담보계 합계">
+      </div>
+      <div>
+        <label class="req-label">현재 신용계 L (원)</label>
+        <input type="text" id="S_L" class="num req" value="0" inputmode="numeric" placeholder="예: 융자/대주/담보대출 합계">
+      </div>
     </div>
     <div class="row-3" style="margin-top:8px">
-      <div><label>매도 대상의 담보등급</label>
+      <div>
+        <label>매도 대상 담보등급</label>
         <select id="S_grade"><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option></select>
         <small>등급표의 인정비율 사용</small>
       </div>
-      <div><label>상황 선택</label>
+      <div>
+        <label>상황 선택</label>
         <select id="S_case">
-          <option value="A">A/C: 매도 즉시 상환(신용주식 혹은 현금매도 즉시상환)</option>
-          <option value="B">B: 현금주식 매도(상환 안 함, 현금 보유)</option>
+          <option value="A">A/C: 매도 즉시 상환</option>
+          <option value="B">B: 현금 보유(상환 안 함)</option>
         </select>
-        <small>A/C가 보통 더 효율적</small>
+        <small>A/C가 일반적으로 더 효율적</small>
       </div>
-      <div><label>필요 매도금액 S (원)</label><input type="text" id="S_result" readonly></div>
+      <div>
+        <label>필요 매도금액 S (원)</label>
+        <input type="text" id="S_result" readonly>
+      </div>
     </div>
-    <div class="btn-row"><button class="btn" onclick="calcS()">S 계산</button></div>
+    <div class="btn-row"><button class="btn" id="calcSBtn">S 계산</button></div>
   </div>
 
-  <details style="margin-top:12px">
-    <summary><b>유의사항 펼치기</b></summary>
-    <ul>
-      <li>D일 체결기준 잔고, 16:30 이후 현재가 적용치가 최종.</li>
-      <li>장중 가격변동으로 인한 부족/해소는 불인정(입금/입고는 즉시 반영).</li>
-      <li>담보유지비율 140% 미달 시 추가담보 요구, 미이행 시 반대매매.</li>
-      <li>실시간 담보비율 100% 미만이면 신규 주문 금지.</li>
-      <li>담보A~E 인정비율은 수시 변경 → 최신 공지 반영 필수.</li>
-    </ul>
+  <!-- 사용 설명 (상세) -->
+  <details style="margin-top:12px" open>
+    <summary><b>사용 설명(상세) & 주의사항</b></summary>
+    <ol>
+      <li><b>기본 입력</b>에 예수금(현금)과 대용평가금액을 넣습니다. 노란 칸부터 채우면 최소 정보로 계산됩니다.</li>
+      <li><b>보증금률/현금·대용 비율</b>은 기본값(45/30/15)을 사용하되, 계좌 유형이 다르면 수정하세요.</li>
+      <li><b>담보 종목</b>에는 보유 종목의 평가금액·담보등급을 추가합니다(행 추가). 인정비율은 A~E 입력칸을 바꾸면 자동 반영됩니다.</li>
+      <li><b>계산하기</b> 버튼을 누르면 ‘신용주문 가능금액’, ‘담보비율’, ‘필요 추가담보금’이 즉시 갱신됩니다.</li>
+      <li><b>S 계산기</b>: 담보계(C)·신용계(L)를 입력하고, 매도대상 등급(k)과 상황(A/C 또는 B)을 고른 뒤 <b>S 계산</b>을 누르면 목표 140%에 필요한 매도금액을 산출합니다.<br>
+          - A/C(매도 즉시 상환): <code>S ≥ (1.4L − C) / (1.4 − k)</code><br>
+          - B(현금 보유): <code>S ≥ (1.4L − C) / (1 − k)</code></li>
+      <li><b>단순 무식법</b>: 현재 부족액과 ‘1주 매도 시 부족액 감소’를 넣고 빠르게 필요한 주식을 추정합니다.</li>
+      <li><b>체결기준·시각</b>: 담보비율은 D일 체결기준, <b>16:30 이후 현재가</b>가 최종. 장중 변동으로 인한 부족/해소는 불인정(입금/입고는 즉시 반영).</li>
+      <li><b>신규주문 제한</b>: 장중 실시간 담보비율 <b>100% 미만</b>이면 신규 주문 금지.</li>
+      <li><b>가정산예수금</b>: 140% 미만 구간에서 <b>가정산예수금이 음수</b>면 신규매수가 막힙니다. 이때는 현금주식 일부 매도로 먼저 <b>플러스 전환</b>하세요.</li>
+    </ol>
+    <p class="muted">※ 본 계산기는 안내 목적이며 실제 체결·정산 규정은 증권사 정책을 따릅니다. 담보A~E 인정비율은 수시 변경되므로 최신 공지를 반영하세요.</p>
   </details>
 </div>
 
 <script>
+/* ---------- Helpers ---------- */
 const qs = s => document.querySelector(s);
 const qsa = s => Array.from(document.querySelectorAll(s));
 const parseNum = v => {
-  if (typeof v !== 'string') v = String(v ?? ''); v = v.replace(/[,\s]/g,'');
-  if (v === '' || v === '-' || v === '--') return 0; const n = Number(v); return isNaN(n) ? 0 : n;
+  if (typeof v !== 'string') v = String(v ?? '');
+  v = v.replace(/[^\d\-\.]/g,'');
+  if (v === '' || v === '-' || v === '--') return 0;
+  const n = Number(v);
+  return isNaN(n) ? 0 : n;
 };
 const fmt = (n,d=0)=>{ const x = Number(n)||0; return x.toLocaleString('ko-KR',{maximumFractionDigits:d,minimumFractionDigits:d}); };
 const pctToDec = p => { const n = parseNum(p); return (n > 2 ? n/100 : n); };
 
+/* ---------- Thousand separators on inputs ---------- */
+function attachNumberFormatter(el){
+  // live recalc while typing
+  el.addEventListener('input', ()=>{ recalc(); });
+  // on focus: show raw digits for easy edit
+  el.addEventListener('focus', ()=>{
+    el.setSelectionRange?.(0, el.value.length);
+    el.value = String(parseNum(el.value) || '');
+  });
+  // on blur: format with commas
+  el.addEventListener('blur', ()=>{
+    const n = parseNum(el.value);
+    el.value = n ? n.toLocaleString('ko-KR') : '';
+    recalc();
+  });
+}
+function formatAllNumbers(){
+  qsa('input.num').forEach(el=>{
+    const n = parseNum(el.value);
+    el.value = n ? n.toLocaleString('ko-KR') : '';
+  });
+}
+
+/* ---------- Dynamic collateral rows ---------- */
 const tbody = qs('#tbody');
 function addRow(name='', amount='', grade='A'){
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td><input type="text" class="c-name" value="${name}" style="width:100%;padding:8px;border:1px solid #cfcfcf;border-radius:8px"></td>
-    <td><input type="text" class="c-amt" value="${amount}" inputmode="numeric" style="width:100%;padding:8px;border:1px solid #cfcfcf;border-radius:8px;text-align:right"></td>
+    <td><input type="text" class="c-amt num" value="${amount}" inputmode="numeric" style="width:100%;padding:8px;border:1px solid #cfcfcf;border-radius:8px;text-align:right"></td>
     <td>
       <select class="c-grade" style="width:100%">
         <option${grade==='A'?' selected':''}>A</option>
@@ -173,12 +290,15 @@ function addRow(name='', amount='', grade='A'){
     <td class="c-rate">—</td>
     <td class="c-eff">0</td>`;
   tbody.appendChild(tr);
-  tr.querySelector('.c-amt').addEventListener('input', recalc);
+  const amt = tr.querySelector('.c-amt');
+  attachNumberFormatter(amt);
   tr.querySelector('.c-grade').addEventListener('change', recalc);
+  formatAllNumbers();
   recalc();
 }
 function clearRows(){ tbody.innerHTML = ''; recalc(); }
 
+/* ---------- Core calc ---------- */
 function getGradeMap(){
   return {
     A: pctToDec(qs('#gradeA').value),
@@ -198,11 +318,14 @@ function recalc(){
   const creditTotal = parseNum(qs('#creditTotal').value);
   const targetRatio = pctToDec(qs('#targetRatio').value);
 
+  // 1) 인정 대용 (주문용)
   const ratioCH = cashRate > 0 ? (substitRate / cashRate) : 0;
   const recognizedSubstit = Math.min(substit, cash * ratioCH);
 
+  // 2) 신용주문 가능금액
   const orderCapacity = marginRate > 0 ? (cash + recognizedSubstit) / marginRate : 0;
 
+  // 3) 담보 유효합
   const gmap = getGradeMap();
   let sumEff = 0;
   qsa('#tbody tr').forEach(tr=>{
@@ -216,56 +339,33 @@ function recalc(){
   });
   qs('#sumEff').textContent = fmt(sumEff);
 
+  // 4) 담보계
   const collateralSum = cash + sumEff;
 
-  let collateralRatioTxt = 'N/A', ratio = 0;
+  // 5) 담보비율
+  let ratioTxt = 'N/A', ratio = 0;
   if (creditTotal > 0){
     ratio = (collateralSum / creditTotal) * 100;
-    collateralRatioTxt = fmt(ratio, 2);
+    ratioTxt = fmt(ratio, 2);
   }
 
-  const requiredCollateral = Math.max(0, creditTotal*targetRatio - collateralSum);
+  // 6) 필요 추가담보
+  const need = Math.max(0, creditTotal*targetRatio - collateralSum);
 
+  // Update UI
   qs('#recognizedSubstit').value = fmt(recognizedSubstit);
   qs('#orderCapacity').value = fmt(orderCapacity);
   qs('#collateralSum').value = fmt(collateralSum);
-  qs('#collateralRatio').value = collateralRatioTxt;
-  const status = qs('#ratioStatus');
+  qs('#collateralRatio').value = ratioTxt;
+  const rs = qs('#ratioStatus');
   if (creditTotal > 0){
-    if (ratio >= 140){ status.textContent='140% 이상(정상)'; status.className='ok'; }
-    else { status.textContent='140% 미만(추가담보 필요)'; status.className='warn'; }
-  } else { status.textContent='신용계(잔액) 0이면 비율 산출 불가'; status.className='muted'; }
-  qs('#requiredCollateral').value = fmt(requiredCollateral);
+    if (ratio >= 140){ rs.textContent='140% 이상(정상)'; rs.className='ok'; }
+    else { rs.textContent='140% 미만(추가담보 필요)'; rs.className='warn'; }
+  } else { rs.textContent='신용계(잔액) 0이면 비율 산출 불가'; rs.className='muted'; }
+  qs('#requiredCollateral').value = fmt(need);
 }
 
-function resetAll(){
-  qs('#cash').value = '1000000';
-  qs('#substit').value = '1000000';
-  qs('#marginRate').value = '45';
-  qs('#cashRate').value = '30';
-  qs('#substitRate').value = '15';
-  qs('#creditTotal').value = '0';
-  qs('#targetRatio').value = '140';
-  qs('#gradeA').value = '70';
-  qs('#gradeB').value = '65';
-  qs('#gradeC').value = '60';
-  qs('#gradeD').value = '55';
-  qs('#gradeE').value = '50';
-  clearRows();
-  addRow('예시A','500000','A');
-  addRow('예시B','300000','D');
-  recalc();
-}
-
-// 단순 무식법
-function calcBrutal(){
-  const shortfall = parseNum(qs('#brutalShortfall').value);
-  const perShare = parseNum(qs('#perShareEffect').value);
-  const shares = (perShare>0)? Math.ceil(shortfall / perShare) : 0;
-  qs('#neededShares').value = fmt(shares);
-}
-
-// S 계산 (등급 k 반영)
+/* ---------- S 계산 (k 반영) ---------- */
 function calcS(){
   const L = parseNum(qs('#S_L').value);
   const C = parseNum(qs('#S_C').value);
@@ -279,6 +379,52 @@ function calcS(){
   qs('#S_result').value = fmt(Math.ceil(S));
 }
 
+/* ---------- Brutal calc ---------- */
+function calcBrutal(){
+  const shortfall = parseNum(qs('#brutalShortfall').value);
+  const perShare = parseNum(qs('#perShareEffect').value);
+  const shares = (perShare > 0) ? Math.ceil(shortfall / perShare) : 0;
+  qs('#neededShares').value = fmt(shares);
+}
+
+/* ---------- Init ---------- */
+function resetAll(){
+  // 기본값 세팅 (필수칸은 노란색)
+  qs('#cash').value = '1000000';
+  qs('#substit').value = '1000000';
+  qs('#marginRate').value = '45';
+  qs('#cashRate').value = '30';
+  qs('#substitRate').value = '15';
+  qs('#creditTotal').value = '0';
+  qs('#targetRatio').value = '140';
+  qs('#gradeA').value = '70';
+  qs('#gradeB').value = '65';
+  qs('#gradeC').value = '60';
+  qs('#gradeD').value = '55';
+  qs('#gradeE').value = '50';
+  qs('#brutalShortfall').value = '1000000';
+  qs('#perShareEffect').value = '100000';
+
+  clearRows();
+  addRow('예시A','500000','A');
+  addRow('예시B','300000','D');
+
+  formatAllNumbers();
+  recalc();
+}
+
+// attach formatters to all numeric inputs
+qsa('input.num').forEach(attachNumberFormatter);
+
+// buttons
+document.getElementById('addRowBtn').addEventListener('click', ()=>addRow('','', 'A'));
+document.getElementById('clearRowsBtn').addEventListener('click', clearRows);
+document.getElementById('recalcBtn').addEventListener('click', recalc);
+document.getElementById('resetBtn').addEventListener('click', resetAll);
+document.getElementById('calcSBtn').addEventListener('click', calcS);
+document.getElementById('calcBrutalBtn').addEventListener('click', calcBrutal);
+
+// first paint
 resetAll();
 </script>
 </body>
